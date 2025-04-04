@@ -1,6 +1,8 @@
 # Import
 import numpy as np
 import pandas as pd
+from docplex.cp.config import context
+
 from rcpsp_max.solvers.RCPSP_CP_benchmark import RCPSP_CP_Benchmark
 import ast
 import copy
@@ -16,6 +18,7 @@ from scheduling_methods.stnu_method import run_stnu_offline, run_stnu_online
 
 from general.logger import get_logger
 logger = get_logger(__name__)
+context.solver.local.execfile = '/Applications/CPLEX_Studio2211/cpoptimizer/bin/arm64_osx/cpoptimizer'
 
 """
 This script contains the experiments that are presented in the AAAI'25 submission "Proactive and Reactive

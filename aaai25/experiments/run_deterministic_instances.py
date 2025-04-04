@@ -1,10 +1,14 @@
 # Import
 import numpy as np
 import pandas as pd
+from docplex.cp.config import context
+
 from rcpsp_max.solvers.RCPSP_CP_benchmark import RCPSP_CP_Benchmark
 
 from general.logger import get_logger
 logger = get_logger(__name__)
+context.solver.local.execfile = '/Applications/CPLEX_Studio2211/cpoptimizer/bin/arm64_osx/cpoptimizer'
+
 
 """
 This script contains the experiments for solving the deterministic instances with perfect information. Note that 

@@ -102,6 +102,46 @@ class CSTNUTool:
 
         return is_dc
 
+    @classmethod
+    def run_convert_alg(cls, instance_location, output_location=None):
+        java_class = 'it.univr.di.cstnu.algorithms.PSTN'
+        arguments = [instance_location]
+        # Dfile=/Applications/MATLAB_R2024b.app/extern/engines/java/jar/engine.jar
+        if output_location:
+            arguments += ['-o', output_location]
+        result = {"is_convertible": False, "probability_mass": None}
+        try:
+            res = cls._run_java(java_class, arguments)
+        except Exception as e:
+            return result, None
+        while res.returncode != 0 and 'Transport stopped' in res.stderr:
+            res = cls._run_java(java_class, arguments)
+
+        if res.returncode != 0:
+            return result, None
+
+        lines = res.stdout.splitlines()
+
+        for line in lines:
+            # Check if the PSTN is convertible
+            if "The given PSTN is convertible!" in line:
+                result["is_convertible"] = True
+
+            # Extract probability mass
+            if "Probability mass:" in line:
+                probability_mass_str = line.split("Probability mass:")[1].strip()
+                result["probability_mass"] = float(probability_mass_str)
+
+                with open(output_location, "r", encoding="utf-8") as file:
+                    content = file.read()
+
+                # Replace only commas in numbers (e.g., "12,34" → "12.34")
+                content = re.sub(r'(?<=\d),(?=\d)', ".", content)
+
+                with open(output_location, "w", encoding="utf-8") as file:
+                    file.write(content)
+
+        return result, output_location
 
 def run_dc_algorithm(directory, file_name):
     instance_location = os.path.abspath(f"{directory}/{file_name}.stnu")
@@ -128,3 +168,18 @@ def run_rte_algorithm(instance_location):
         logger.debug("could not parse schedule")
 
     return schedule
+
+
+def run_convert_algorithm(directory, file_name):
+    instance_location = os.path.abspath(f"{directory}/{file_name}.pstn")
+    if not os.path.exists(instance_location):
+        logger.warning(f"warning: could not find {instance_location}")
+        return False, None
+    else:
+        logger.debug(f"running CSTNUTool on {file_name}")
+
+        output_location = instance_location.replace(".pstn", "-dc.pstn")
+
+        res, output_location = CSTNUTool.run_convert_alg(instance_location, output_location)
+
+    return res, output_location

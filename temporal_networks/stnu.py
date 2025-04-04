@@ -285,7 +285,8 @@ class STNU:
         self.add_interval_constraint(node_from, node_to, distance, distance)
 
     def add_contingent_link(self, node_from: int, node_to: int, x, y):
-        self.node_types[node_from] = STNU.ACTIVATION_TP
+        if self.node_types[node_from] != STNU.CONTINGENT_TP:
+            self.node_types[node_from] = STNU.ACTIVATION_TP
         self.node_types[node_to] = STNU.CONTINGENT_TP
 
         label = self.translation_dict[node_to]
@@ -315,17 +316,18 @@ class STNU:
         incoming_edges = []  # I have chosen now to use a dictionary to keep track of the incoming edges
         # Find incoming edges of node u from OU graph
         for pred_node in range(N):
-            if node_to in self.edges[pred_node]:
-                edge = self.edges[pred_node][node_to]
-                if ordinary:
-                    if edge.weight is not None:
-                        incoming_edges.append((edge.weight, pred_node, STNU.ORDINARY_LABEL, None))
-                if uc:
-                    if edge.uc_weight is not None:
-                        incoming_edges.append((edge.uc_weight, pred_node, STNU.UC_LABEL, edge.uc_label))
-                if lc:
-                    if edge.lc_weight is not None:
-                        incoming_edges.append((edge.lc_weight, pred_node, STNU.LC_LABEL, edge.lc_label))
+            if pred_node in self.edges:
+                if node_to in self.edges[pred_node]:
+                    edge = self.edges[pred_node][node_to]
+                    if ordinary:
+                        if edge.weight is not None:
+                            incoming_edges.append((edge.weight, pred_node, STNU.ORDINARY_LABEL, None))
+                    if uc:
+                        if edge.uc_weight is not None:
+                            incoming_edges.append((edge.uc_weight, pred_node, STNU.UC_LABEL, edge.uc_label))
+                    if lc:
+                        if edge.lc_weight is not None:
+                            incoming_edges.append((edge.lc_weight, pred_node, STNU.LC_LABEL, edge.lc_label))
 
         return incoming_edges
 
@@ -379,16 +381,17 @@ class STNU:
         wait_edges = []  # I have chosen now to use a dictionary to keep track of the incoming edges
         # Find incoming edges of node u from OU graph
         for node_from in range(N):
-            for node_to in range(N):
-                if node_to in self.edges[node_from]:
-                    edge = self.edges[node_from][node_to]
-                    if edge.uc_weight is not None:
-                        node_from_label = self.translation_dict[node_from]
-                        node_to_label = self.translation_dict[node_to]
-                        if edge.uc_label in (node_from_label, node_to_label):
-                            continue
-                        else:
-                            wait_edges.append((node_from, edge.uc_label, edge.uc_weight, node_to))
+            if node_from in self.edges:
+                for node_to in range(N):
+                    if node_to in self.edges[node_from]:
+                        edge = self.edges[node_from][node_to]
+                        if edge.uc_weight is not None:
+                            node_from_label = self.translation_dict[node_from]
+                            node_to_label = self.translation_dict[node_to]
+                            if edge.uc_label in (node_from_label, node_to_label):
+                                continue
+                            else:
+                                wait_edges.append((node_from, edge.uc_label, edge.uc_weight, node_to))
 
         return wait_edges
 
